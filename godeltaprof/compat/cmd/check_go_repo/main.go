@@ -106,7 +106,7 @@ func createPR(msg string) {
 	shMy.sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
 	shMy.sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
 
-	shMy.sh(fmt.Sprintf("gh pr create --title '%s' --body '%s'", commitMessage, msg))
+	shMy.sh(fmt.Sprintf("gh pr create --title '%s' --body '%s' --label '%s' ", commitMessage, msg, label))
 
 }
 
