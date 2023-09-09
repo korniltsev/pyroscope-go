@@ -17,7 +17,7 @@ const goRepoURL = "git@github.com:golang/go.git"
 
 // todo change these to grafana
 const myRepoURL = "https://github.com/korniltsev/pyroscope-go"
-const myRemote = "korniltsev"
+const myRemote = "origin"
 
 const mprof = "src/runtime/mprof.go"
 const pprof = "src/runtime/pprof"
