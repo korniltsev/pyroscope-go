@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"strings"
+	"time"
 )
 
 const goRepoURL = "git@github.com:golang/go.git"
@@ -74,10 +76,22 @@ out:
 	}
 	if found == -1 {
 		log.Println("existing PR not found, creating a new one")
+		createPR(msg)
 	} else {
 		log.Printf("found existing PR %+v. updating.", prs[found])
 	}
 
+}
+
+func createPR(msg string) {
+	// create a branch
+	branchName := fmt.Sprintf("check_go_repo_%d", time.Now().Second())
+	commitMessage := ""
+	sh(fmt.Sprintf("git checkout -b %s", branchName))
+	sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
+	//sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
+
+	// create pR
 }
 
 func writeLastKnownCommits() {
@@ -173,4 +187,18 @@ func getPRS() []PR {
 	requireNoError(err, "unmarshal prs")
 	log.Println("prs", prs)
 	return prs
+}
+
+func sh(sh string) string {
+	return execCMD("/bin/sh", "-c", sh)
+}
+
+func execCMD(cmdArgs ...string) string {
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	cmd.Dir = getRepoDir()
+	stdout := bytes.NewBuffer(nil)
+	cmd.Stdout = stdout
+	err := cmd.Run()
+	requireNoError(err, strings.Join(cmdArgs, " "))
+	return stdout.String()
 }
