@@ -107,6 +107,7 @@ func updatePR(msg string, request PullRequest) {
 	shMy.sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
 	shMy.sh(fmt.Sprintf("git push -f %s %s:%s", myRemote, branchName, request.HeadRefName))
 
+	shMy.sh(fmt.Sprintf("gh pr edit %d --body '%s'", request.Number, msg+"\nedited "+time.Now().String()))
 	//todo update pr body
 
 }
