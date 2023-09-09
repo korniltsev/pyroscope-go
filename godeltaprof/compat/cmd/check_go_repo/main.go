@@ -37,7 +37,7 @@ var shMy = sh{}
 var shGo = sh{wd: getRepoDir()}
 
 func main() {
-	getRepo()
+	updateGoRepo()
 	loadLastKnownCommits()
 	loadCurrentCommits()
 	if known == current {
@@ -108,7 +108,6 @@ func updatePR(msg string, request PullRequest) {
 	shMy.sh(fmt.Sprintf("git push -f %s %s:%s", myRemote, branchName, request.HeadRefName))
 
 	shMy.sh(fmt.Sprintf("gh pr edit %d --body '%s'", request.Number, msg+"\nedited "+time.Now().String()))
-	//todo update pr body
 
 }
 
@@ -166,7 +165,7 @@ func loadLastKnownCommits() {
 	log.Printf("known commits: %+v\n", known)
 }
 
-func getRepo() {
+func updateGoRepo() {
 	_, err := os.Stat(repoDir)
 	if err != nil {
 		if os.IsNotExist(err) {
