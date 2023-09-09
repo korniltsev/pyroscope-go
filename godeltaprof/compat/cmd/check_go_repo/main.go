@@ -83,7 +83,7 @@ func createOrUpdatePR() {
 out:
 	for i, pr := range prs {
 		for j := range pr.Labels {
-			if pr.Labels[j] == label {
+			if pr.Labels[j].Name == label {
 				found = i
 				break out
 			}
@@ -100,7 +100,7 @@ out:
 }
 
 func updatePR(msg string, request PullRequest) {
-	
+
 }
 
 func createPR(msg string) {
@@ -179,11 +179,15 @@ func getRepoDir() string {
 }
 
 type PullRequest struct {
-	BaseRefName string   `json:"baseRefName"`
-	HeadRefName string   `json:"headRefName"`
-	Id          string   `json:"id"`
-	Labels      []string `json:"labels"`
-	Number      int      `json:"number"`
+	BaseRefName string       `json:"baseRefName"`
+	HeadRefName string       `json:"headRefName"`
+	Id          string       `json:"id"`
+	Labels      []IssueLabel `json:"labels"`
+	Number      int          `json:"number"`
+}
+
+type IssueLabel struct {
+	Name string `json:"name"`
 }
 
 func getPullRequests() []PullRequest {
