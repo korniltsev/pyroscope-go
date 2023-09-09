@@ -94,8 +94,13 @@ out:
 		createPR(msg)
 	} else {
 		log.Printf("found existing PR %+v. updating.", prs[found])
+		updatePR(msg, prs[found])
 	}
 
+}
+
+func updatePR(msg string, request PullRequest) {
+	
 }
 
 func createPR(msg string) {
