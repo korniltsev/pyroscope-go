@@ -100,12 +100,20 @@ out:
 }
 
 func updatePR(msg string, request PullRequest) {
+	branchName := createBranchName()
+	commitMessage := createCommitMessage()
+
+	shMy.sh(fmt.Sprintf("git checkout -b %s", branchName))
+	shMy.sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
+	shMy.sh(fmt.Sprintf("git push -f %s %s:%s", myRemote, branchName, request.HeadRefName))
+
+	//todo update pr body
 
 }
 
 func createPR(msg string) {
-	branchName := fmt.Sprintf("check_go_repo_%d", time.Now().Unix())
-	commitMessage := fmt.Sprintf("chore(check_go_repo): update %s", latestCommitsFile)
+	branchName := createBranchName()
+	commitMessage := createCommitMessage()
 
 	shMy.sh(fmt.Sprintf("git checkout -b %s", branchName))
 	shMy.sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
@@ -113,6 +121,14 @@ func createPR(msg string) {
 
 	shMy.sh(fmt.Sprintf("gh pr create --title '%s' --body '%s' --label '%s' ", commitMessage, msg, label))
 
+}
+
+func createCommitMessage() string {
+	return fmt.Sprintf("chore(check_go_repo): update %s", latestCommitsFile)
+}
+
+func createBranchName() string {
+	return fmt.Sprintf("check_go_repo_%d", time.Now().Unix())
 }
 
 func writeLastKnownCommits() {
