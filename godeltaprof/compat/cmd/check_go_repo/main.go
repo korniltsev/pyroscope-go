@@ -197,8 +197,11 @@ func execCMD(cmdArgs ...string) string {
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 	cmd.Dir = getRepoDir()
 	stdout := bytes.NewBuffer(nil)
+	stderr := bytes.NewBuffer(nil)
 	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	err := cmd.Run()
 	requireNoError(err, strings.Join(cmdArgs, " "))
+	fmt.Println(stderr.String())
 	return stdout.String()
 }
