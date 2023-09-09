@@ -195,8 +195,8 @@ func (s *sh) cmd(cmdArgs ...string) (string, string) {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	err := cmd.Run()
-	requireNoError(err, strings.Join(cmdArgs, " "))
 	fmt.Println(stdout.String())
 	fmt.Println(stderr.String())
+	requireNoError(err, strings.Join(cmdArgs, " "))
 	return stdout.String(), stderr.String()
 }
