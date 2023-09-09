@@ -190,6 +190,7 @@ func (s *sh) sh(sh string) (string, string) {
 func (s *sh) cmd(cmdArgs ...string) (string, string) {
 	log.Printf("cmd %s\n", strings.Join(cmdArgs, " "))
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	cmd.Dir = s.wd
 	stdout := bytes.NewBuffer(nil)
 	stderr := bytes.NewBuffer(nil)
 	cmd.Stdout = stdout
