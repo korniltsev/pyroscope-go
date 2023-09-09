@@ -11,29 +11,73 @@ import (
 	"regexp"
 )
 
-const repo = "git@github.com:golang/go.git"
+const goRepoURL = "git@github.com:golang/go.git"
+
+// todo change these to grafana
+const myRepoURL = "https://github.com/korniltsev/pyroscope-go"
+const myRemote = "korniltsev"
+
 const mprof = "src/runtime/mprof.go"
 const pprof = "src/runtime/pprof"
 const repoDir = "go_repo"
 const latestCommitsFile = "last_known_go_commits.json"
+const label = "godeltaprof: check_go_repo"
 
 type Commits struct {
 	Mprof string `json:"mprof"`
 	Pprof string `json:"pprof"`
 }
 
-var latestCommits Commits
+var known Commits
 var current Commits
 
 func main() {
 	getRepo()
 	loadLastKnownCommits()
 	loadCurrentCommits()
-	if latestCommits == current {
+	if known == current {
 		log.Println("no new commits")
 		return
 	}
 	writeLastKnownCommits()
+	createOrUpdatePR()
+}
+
+func createOrUpdatePR() {
+	msg := ""
+	const commitUrl = "https://github.com/golang/go/commit/"
+	if current.Mprof != known.Mprof {
+		msg += mprof
+		msg += "\n"
+		msg += "last known [" + known.Mprof + "](" + commitUrl + known.Mprof + ")\n"
+		msg += "current    [" + current.Mprof + "](" + commitUrl + current.Mprof + ")\n"
+	}
+
+	if current.Pprof != known.Pprof {
+		msg += pprof
+		msg += "\n"
+		msg += "last known [" + known.Pprof + "](" + commitUrl + known.Pprof + ")\n"
+		msg += "current    [" + current.Pprof + "](" + commitUrl + current.Pprof + ")\n"
+	}
+	log.Println(msg)
+
+	prs := getPRS()
+	found := -1
+out:
+	for i, pr := range prs {
+		for j := range pr.Labels {
+			if pr.Labels[j] == label {
+				found = i
+				break out
+			}
+		}
+	}
+	if found == -1 {
+		log.Println("existing PR not found, creating a new one")
+	} else {
+		log.Printf("found existing PR %+v. updating.", prs[found])
+	}
+
 }
 
 func writeLastKnownCommits() {
@@ -52,12 +96,10 @@ func loadCurrentCommits() {
 
 func checkLatestCommit(repoPath string) string {
 	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("git log -- %s | head -n 1", repoPath))
-	cwd, err := os.Getwd()
-	requireNoError(err, "cwd")
-	cmd.Dir = path.Join(cwd, repoDir)
+	cmd.Dir = getRepoDir()
 	stdout := bytes.NewBuffer(nil)
 	cmd.Stdout = stdout
-	err = cmd.Run()
+	err := cmd.Run()
 	requireNoError(err, "checkLatestCommit "+repoPath)
 	s := stdout.String()
 	re := regexp.MustCompile("commit ([a-f0-9]{40})")
@@ -73,16 +115,16 @@ func checkLatestCommit(repoPath string) string {
 func loadLastKnownCommits() {
 	bs, err := os.ReadFile(latestCommitsFile)
 	requireNoError(err, "read known_commits.json")
-	err = json.Unmarshal(bs, &latestCommits)
+	err = json.Unmarshal(bs, &known)
 	requireNoError(err, "unmarshal known_commits.json")
-	log.Printf("known commits: %+v\n", latestCommits)
+	log.Printf("known commits: %+v\n", known)
 }
 
 func getRepo() {
 	_, err := os.Stat(repoDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			cmd := exec.Command("git", "clone", repo, repoDir)
+			cmd := exec.Command("git", "clone", goRepoURL, repoDir)
 			requireNoError(cmd.Run(), "git clone repo")
 			log.Println("git clone done", cmd.ProcessState.ExitCode())
 		} else {
@@ -91,10 +133,44 @@ func getRepo() {
 	} else {
 		log.Println("repo exists")
 	}
+
+	cmd := exec.Command("/bin/sh", "-c", "git checkout master && git pull")
+	cmd.Dir = getRepoDir()
+	requireNoError(cmd.Run(), "git pull")
+	log.Println("git pull done")
 }
 
 func requireNoError(err error, msg string) {
 	if err != nil {
 		log.Fatal(msg, err)
 	}
+}
+
+func getRepoDir() string {
+	cwd, err := os.Getwd()
+	requireNoError(err, "cwd")
+	return path.Join(cwd, repoDir)
+}
+
+type PR struct {
+	BaseRefName string   `json:"baseRefName"`
+	HeadRefName string   `json:"headRefName"`
+	Id          string   `json:"id"`
+	Labels      []string `json:"labels"`
+	Number      int      `json:"number"`
+}
+
+func getPRS() []PR {
+	cmd := exec.Command("gh", "pr", "list", "--json", "id,number,labels,baseRefName,headRefName",
+		"-R", myRepoURL)
+	cmd.Dir = getRepoDir()
+	stdout := bytes.NewBuffer(nil)
+	cmd.Stdout = stdout
+	err := cmd.Run()
+	requireNoError(err, "gh pr list")
+	var prs []PR
+	err = json.Unmarshal(stdout.Bytes(), &prs)
+	requireNoError(err, "unmarshal prs")
+	log.Println("prs", prs)
+	return prs
 }
