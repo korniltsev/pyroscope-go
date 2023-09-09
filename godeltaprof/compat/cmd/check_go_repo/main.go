@@ -156,7 +156,7 @@ func getRepo() {
 
 func requireNoError(err error, msg string) {
 	if err != nil {
-		log.Fatal(msg, err)
+		log.Fatalf("msg %s err %v", msg, err)
 	}
 }
 
