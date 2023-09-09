@@ -87,9 +87,10 @@ func createPR(msg string) {
 	// create a branch
 	branchName := fmt.Sprintf("check_go_repo_%d", time.Now().Second())
 	commitMessage := fmt.Sprintf("chore(check_go_repo): update %s", latestCommitsFile)
-	sh(fmt.Sprintf("git checkout -b %s", branchName))
-	sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
-	//sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
+	sh := sh{}
+	sh.sh(fmt.Sprintf("git checkout -b %s", branchName))
+	sh.sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
+	//sh.sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
 
 	// create pR
 }
@@ -189,19 +190,22 @@ func getPRS() []PR {
 	return prs
 }
 
-func sh(sh string) string {
-	return execCMD("/bin/sh", "-c", sh)
+type sh struct {
+	wd string
 }
 
-func execCMD(cmdArgs ...string) string {
+func (s *sh) sh(sh string) string {
+	return s.cmd("/bin/sh", "-c", sh)
+}
+
+func (s *sh) cmd(cmdArgs ...string) string {
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	cmd.Dir = getRepoDir()
 	stdout := bytes.NewBuffer(nil)
-	stderr := bytes.NewBuffer(nil)
+	//stderr := bytes.NewBuffer(nil)
 	cmd.Stdout = stdout
-	cmd.Stderr = stderr
+	//cmd.Stderr = stderr
 	err := cmd.Run()
 	requireNoError(err, strings.Join(cmdArgs, " "))
-	fmt.Println(stderr.String())
+	//fmt.Println(stderr.String())
 	return stdout.String()
 }
