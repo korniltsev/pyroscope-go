@@ -56,13 +56,25 @@ func createOrUpdatePR() {
 		msg += "\n"
 		msg += "last known [" + known.Mprof + "](" + commitUrl + known.Mprof + ")\n"
 		msg += "current    [" + current.Mprof + "](" + commitUrl + current.Mprof + ")\n"
+		commits, _ := shGo.sh(fmt.Sprintf("git log  %s..%s -- %s", known.Mprof, current.Mprof, mprof))
+		msg += "```\n"
+		msg += commits
+		msg += "\n"
+		msg += "```\n"
 	}
+	//git log  1c0035401358c8bfc2ff646b1d950da5fcd6b355..a7c3de705287d56e3bea8a84ed9a56e4102d3f39 -- src/runtime/mprof.go
 
 	if current.Pprof != known.Pprof {
 		msg += pprof
 		msg += "\n"
 		msg += "last known [" + known.Pprof + "](" + commitUrl + known.Pprof + ")\n"
 		msg += "current    [" + current.Pprof + "](" + commitUrl + current.Pprof + ")\n"
+
+		commits, _ := shGo.sh(fmt.Sprintf("git log  %s..%s -- %s", known.Pprof, current.Pprof, pprof))
+		msg += "```\n"
+		msg += commits
+		msg += "\n"
+		msg += "```\n"
 	}
 	log.Println(msg)
 
