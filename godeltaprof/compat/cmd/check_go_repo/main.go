@@ -90,7 +90,7 @@ func createPR(msg string) {
 	sh := sh{}
 	sh.sh(fmt.Sprintf("git checkout -b %s", branchName))
 	sh.sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
-	//sh.sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
+	sh.sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
 
 	// create pR
 }
