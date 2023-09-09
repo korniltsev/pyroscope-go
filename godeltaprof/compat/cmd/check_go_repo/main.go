@@ -86,7 +86,7 @@ out:
 func createPR(msg string) {
 	// create a branch
 	branchName := fmt.Sprintf("check_go_repo_%d", time.Now().Second())
-	commitMessage := ""
+	commitMessage := fmt.Sprintf("chore(check_go_repo): update %s", latestCommitsFile)
 	sh(fmt.Sprintf("git checkout -b %s", branchName))
 	sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
 	//sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
