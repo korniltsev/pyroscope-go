@@ -33,6 +33,9 @@ type Commits struct {
 var known Commits
 var current Commits
 
+var shMy = sh{}
+var shGo = sh{wd: getRepoDir()}
+
 func main() {
 	getRepo()
 	loadLastKnownCommits()
@@ -63,7 +66,7 @@ func createOrUpdatePR() {
 	}
 	log.Println(msg)
 
-	prs := getPRS()
+	prs := getPullRequests()
 	found := -1
 out:
 	for i, pr := range prs {
@@ -87,12 +90,13 @@ func createPR(msg string) {
 	// create a branch
 	branchName := fmt.Sprintf("check_go_repo_%d", time.Now().Unix())
 	commitMessage := fmt.Sprintf("chore(check_go_repo): update %s", latestCommitsFile)
-	sh := sh{}
-	sh.sh(fmt.Sprintf("git checkout -b %s", branchName))
-	sh.sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
-	sh.sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
 
-	// create pR
+	shMy.sh(fmt.Sprintf("git checkout -b %s", branchName))
+	shMy.sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
+	shMy.sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
+
+	shMy.sh(fmt.Sprintf("gh pr create --title '%s' --body '%s'", commitMessage, msg))
+
 }
 
 func writeLastKnownCommits() {
@@ -110,13 +114,7 @@ func loadCurrentCommits() {
 }
 
 func checkLatestCommit(repoPath string) string {
-	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("git log -- %s | head -n 1", repoPath))
-	cmd.Dir = getRepoDir()
-	stdout := bytes.NewBuffer(nil)
-	cmd.Stdout = stdout
-	err := cmd.Run()
-	requireNoError(err, "checkLatestCommit "+repoPath)
-	s := stdout.String()
+	s, _ := shGo.sh(fmt.Sprintf("git log -- %s | head -n 1", repoPath))
 	re := regexp.MustCompile("commit ([a-f0-9]{40})")
 	match := re.FindStringSubmatch(s)
 	if match == nil {
@@ -139,9 +137,8 @@ func getRepo() {
 	_, err := os.Stat(repoDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			cmd := exec.Command("git", "clone", goRepoURL, repoDir)
-			requireNoError(cmd.Run(), "git clone repo")
-			log.Println("git clone done", cmd.ProcessState.ExitCode())
+			shMy.sh(fmt.Sprintf("git clone %s %s", goRepoURL, repoDir))
+			log.Println("git clone done")
 		} else {
 			log.Fatal(err)
 		}
@@ -149,9 +146,7 @@ func getRepo() {
 		log.Println("repo exists")
 	}
 
-	cmd := exec.Command("/bin/sh", "-c", "git checkout master && git pull")
-	cmd.Dir = getRepoDir()
-	requireNoError(cmd.Run(), "git pull")
+	shGo.sh("git checkout master && git pull")
 	log.Println("git pull done")
 }
 
@@ -167,7 +162,7 @@ func getRepoDir() string {
 	return path.Join(cwd, repoDir)
 }
 
-type PR struct {
+type PullRequest struct {
 	BaseRefName string   `json:"baseRefName"`
 	HeadRefName string   `json:"headRefName"`
 	Id          string   `json:"id"`
@@ -175,16 +170,11 @@ type PR struct {
 	Number      int      `json:"number"`
 }
 
-func getPRS() []PR {
-	cmd := exec.Command("gh", "pr", "list", "--json", "id,number,labels,baseRefName,headRefName",
-		"-R", myRepoURL)
-	cmd.Dir = getRepoDir()
-	stdout := bytes.NewBuffer(nil)
-	cmd.Stdout = stdout
-	err := cmd.Run()
-	requireNoError(err, "gh pr list")
-	var prs []PR
-	err = json.Unmarshal(stdout.Bytes(), &prs)
+func getPullRequests() []PullRequest {
+	s := sh{}
+	stdout, _ := s.sh("gh pr list --json 'id,number,labels,baseRefName,headRefName' -R " + myRepoURL)
+	var prs []PullRequest
+	err := json.Unmarshal([]byte(stdout), &prs)
 	requireNoError(err, "unmarshal prs")
 	log.Println("prs", prs)
 	return prs
@@ -194,18 +184,20 @@ type sh struct {
 	wd string
 }
 
-func (s *sh) sh(sh string) string {
+func (s *sh) sh(sh string) (string, string) {
 	return s.cmd("/bin/sh", "-c", sh)
 }
 
-func (s *sh) cmd(cmdArgs ...string) string {
+func (s *sh) cmd(cmdArgs ...string) (string, string) {
+	log.Printf("cmd %s\n", strings.Join(cmdArgs, " "))
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 	stdout := bytes.NewBuffer(nil)
-	//stderr := bytes.NewBuffer(nil)
+	stderr := bytes.NewBuffer(nil)
 	cmd.Stdout = stdout
-	//cmd.Stderr = stderr
+	cmd.Stderr = stderr
 	err := cmd.Run()
 	requireNoError(err, strings.Join(cmdArgs, " "))
-	//fmt.Println(stderr.String())
-	return stdout.String()
+	fmt.Println(stdout.String())
+	fmt.Println(stderr.String())
+	return stdout.String(), stderr.String()
 }
