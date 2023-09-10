@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const goRepoURL = "git@github.com:golang/go.git"
+const goRepoURL = "https://github.com/golang/go.git"
 
 // todo change these to grafana
 const myRepoURL = "https://github.com/korniltsev/pyroscope-go"
