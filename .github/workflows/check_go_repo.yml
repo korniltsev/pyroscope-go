@@ -7,8 +7,6 @@ on:
 
 jobs:
   check_go_repo:
-    env:
-      GH_TOKEN: ${{ github.GITHUB_TOKEN }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,4 +15,6 @@ jobs:
         with:
           go-version: '1.20'
       - name: Check go repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make godeltaprof/check_go_repo
