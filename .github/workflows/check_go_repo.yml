@@ -17,4 +17,7 @@ jobs:
       - name: Check go repo
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make godeltaprof/check_go_repo
+        run: |
+          cd godeltaprof/compat/cmd/check_go_repo && go run main.go \
+            -git.user.name="Tolyan Korniltsev" \
+            -git.user.email=korniltsev.anatoly@gmail.com

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -12,6 +13,9 @@ import (
 	"strings"
 	"time"
 )
+
+var gitUserName = flag.String("git.user.name", "", "git user name")
+var gitUserEmail = flag.String("git.user.email", "", "git user email")
 
 const goRepoURL = "https://github.com/golang/go.git"
 
@@ -35,6 +39,8 @@ var shMy = sh{}
 var shGo = sh{wd: getRepoDir()}
 
 func main() {
+	flag.Parse()
+
 	updateGoRepo()
 	loadLastKnownCommits()
 	loadCurrentCommits()
@@ -102,6 +108,10 @@ func updatePR(msg string, request PullRequest) {
 	commitMessage := createCommitMessage()
 
 	shMy.sh(fmt.Sprintf("git checkout -b %s", branchName))
+	if *gitUserName != "" && *gitUserEmail != "" {
+		shMy.sh(fmt.Sprintf("git config user.name '%s'", *gitUserName))
+		shMy.sh(fmt.Sprintf("git config user.email '%s'", *gitUserEmail))
+	}
 	shMy.sh(fmt.Sprintf("git commit -am '%s'", commitMessage))
 	shMy.sh(fmt.Sprintf("git push -f %s %s:%s", myRemote, branchName, request.HeadRefName))
 
@@ -114,6 +124,10 @@ func createPR(msg string) {
 	commitMessage := createCommitMessage()
 
 	shMy.sh(fmt.Sprintf("git checkout -b %s", branchName))
+	if *gitUserName != "" && *gitUserEmail != "" {
+		shMy.sh(fmt.Sprintf("git config user.name '%s'", *gitUserName))
+		shMy.sh(fmt.Sprintf("git config user.email '%s'", *gitUserEmail))
+	}
 	shMy.sh(fmt.Sprintf("git commit -am '%s'", commitMessage))
 	shMy.sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
 
