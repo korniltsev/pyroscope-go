@@ -102,7 +102,7 @@ func updatePR(msg string, request PullRequest) {
 	commitMessage := createCommitMessage()
 
 	shMy.sh(fmt.Sprintf("git checkout -b %s", branchName))
-	shMy.sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
+	shMy.sh(fmt.Sprintf("git commit -am '%s'", commitMessage))
 	shMy.sh(fmt.Sprintf("git push -f %s %s:%s", myRemote, branchName, request.HeadRefName))
 
 	shMy.sh(fmt.Sprintf("gh pr edit %d --body '%s'", request.Number, msg))
@@ -114,7 +114,7 @@ func createPR(msg string) {
 	commitMessage := createCommitMessage()
 
 	shMy.sh(fmt.Sprintf("git checkout -b %s", branchName))
-	shMy.sh(fmt.Sprintf("git ci -am '%s'", commitMessage))
+	shMy.sh(fmt.Sprintf("git commit -am '%s'", commitMessage))
 	shMy.sh(fmt.Sprintf("git push %s %s", myRemote, branchName))
 
 	shMy.sh(fmt.Sprintf("gh pr create --title '%s' --body '%s' --label '%s' ", commitMessage, msg, label))
