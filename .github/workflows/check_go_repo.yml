@@ -1,0 +1,17 @@
+name: Check Go repo
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.20'
+      - name: Check go repo
+        run: make godeltaprof/check_go_repo
