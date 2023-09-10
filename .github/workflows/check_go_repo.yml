@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  go:
+  check_go_repo:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
