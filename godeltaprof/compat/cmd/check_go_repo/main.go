@@ -15,8 +15,6 @@ import (
 
 const goRepoURL = "https://github.com/golang/go.git"
 
-// todo change these to grafana
-const myRepoURL = "https://github.com/korniltsev/pyroscope-go"
 const myRemote = "origin"
 
 const mprof = "src/runtime/mprof.go"
@@ -208,7 +206,7 @@ type IssueLabel struct {
 
 func getPullRequests() []PullRequest {
 	s := sh{}
-	stdout, _ := s.sh("gh pr list --json 'id,number,labels,baseRefName,headRefName' -R " + myRepoURL)
+	stdout, _ := s.sh("gh pr list --json 'id,number,labels,baseRefName,headRefName'")
 	var prs []PullRequest
 	err := json.Unmarshal([]byte(stdout), &prs)
 	requireNoError(err, "unmarshal prs")
